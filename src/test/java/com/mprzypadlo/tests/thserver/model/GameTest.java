@@ -20,6 +20,10 @@ import static org.mockito.Mockito.*;
  */
 public class GameTest {
 
+    /**
+     * Class under test.
+     * This is a line that will cause conflict.
+     */
     private Game game;
 
     PlayerFactoryInterface playerFactoryMock;
