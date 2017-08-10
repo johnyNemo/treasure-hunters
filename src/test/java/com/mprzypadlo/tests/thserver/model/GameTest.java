@@ -15,7 +15,7 @@ import org.junit.Test;
 import static org.mockito.Mockito.*;
 
 /**
- *
+ * Tests for Game class.
  * @author mprzypadlo
  */
 public class GameTest {
