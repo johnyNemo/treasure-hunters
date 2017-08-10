@@ -22,7 +22,7 @@ public class GameTest {
 
     /**
      * Class under test.
-     * This is a line that will cause conflict.
+     * This is a line that will cause conflict, Yes exacly this line.
      */
     private Game game;
 
