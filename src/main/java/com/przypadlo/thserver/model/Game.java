@@ -1,7 +1,7 @@
 package com.przypadlo.thserver.model;
 
-import com.przypadlo.thserver.model.Board.Directions;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -25,15 +25,15 @@ public class Game {
 
     private Status status = Status.WAITING_FOR_USERS;
 
-    Iterator<String> playerIterator;
+    private Iterator<String> playerIterator;
 
-    private Dice dice;
-    
+    private final Dice dice;
+
     private int diceRoll;
 
     public Game(
             PlayerFactoryInterface playerFactory,
-            Map<String, Player> players,
+            LinkedHashMap<String, Player> players,
             int minPlayers,
             Dice dice
     ) {
@@ -44,11 +44,7 @@ public class Game {
     }
 
     public void addPlayer(String name, String playerClass) {
-
-        if (players.containsKey(name)) {
-            throw new RuntimeException("User alread exists.");
-        }
-
+        throwExceptionIfPlayerExists(name);
         Player p = playerFactory.getPlayer(playerClass);
         players.put(name, p);
 
@@ -57,6 +53,12 @@ public class Game {
             playerIterator = players.keySet().iterator();
             currentPlayer = playerIterator.next();
             diceRoll = dice.roll();
+        }
+    }
+
+    private void throwExceptionIfPlayerExists(String name) {
+        if (players.containsKey(name)) {
+            throw new RuntimeException("User alread exists.");
         }
     }
 
@@ -84,16 +86,39 @@ public class Game {
     public int lastDiceRoll() {
         return diceRoll;
     }
-    
-    public void movePlayerRight(String playerName) { 
+
+    public void movePlayerRight(String playerName) {
+        throwExceptionWhenIncorrectPlayer(playerName);
         Player p = players.get(playerName);
         p.moveRight(diceRoll);
-        
+
     }
-    
-    public void movePlayerLeft(String playerName) { 
+
+    public void movePlayerLeft(String playerName) {
+        throwExceptionWhenIncorrectPlayer(playerName);
         Player p = players.get(playerName);
         p.moveLeft(diceRoll);
+    }
+
+    public void attack(String attackerName, String attackeeName) {
+        throwExceptionWhenIncorrectPlayer(attackerName);
+        throwExceptionIfPlayerDoesNotExists(attackeeName);
+        Player attacker = players.get(attackerName);
+        Player attackee = players.get(attackeeName);
+
+        attacker.attack(attackee);
+    }
+
+    private void throwExceptionIfPlayerDoesNotExists(String playerName) {
+        if (!players.containsKey(playerName)) {
+            throw new IllegalArgumentException("Player does not exists");
+        }
+    }
+
+    private void throwExceptionWhenIncorrectPlayer(String playerName) {
+        if (!playerName.equals(currentPlayer())) {
+            throw new IllegalArgumentException("Given Player is not current");
+        }
     }
 
 }

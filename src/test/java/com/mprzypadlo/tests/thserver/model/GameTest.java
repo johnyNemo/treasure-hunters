@@ -1,12 +1,11 @@
 package com.mprzypadlo.tests.thserver.model;
 
-import com.przypadlo.thserver.model.Board.Directions;
 import com.przypadlo.thserver.model.Dice;
 import com.przypadlo.thserver.model.Game;
 import com.przypadlo.thserver.model.Game.Status;
 import com.przypadlo.thserver.model.Player;
 import com.przypadlo.thserver.model.PlayerFactoryInterface;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -14,48 +13,38 @@ import org.junit.Before;
 import org.junit.Test;
 import static org.mockito.Mockito.*;
 
-/**
- * Tests for Game class.
- * @author mprzypadlo
- */
 public class GameTest {
 
-    /**
-     * Class under test.
-     * This is a line that will cause conflict, Yes exacly this line.
-     */
     private Game game;
 
     PlayerFactoryInterface playerFactoryMock;
 
     Dice diceMock;
 
-    private HashMap<String, Player> players;
+    private LinkedHashMap<String, Player> players;
 
     private final int minPlayers = 2;
 
     @Before
     public void setUp() {
+        System.out.println("Before each test?!");
         playerFactoryMock = mock(PlayerFactoryInterface.class);
         diceMock = mock(Dice.class);
-        players = new HashMap();
+        players = new LinkedHashMap();
+        System.out.println("Players size: " + players.size());
         game = new Game(playerFactoryMock, players, minPlayers, diceMock);
     }
 
     @Test
     public void Player_Can_Join_Game() {
-        game.addPlayer(
-                "johny",
-                "wizard"
-        );
-        verify(playerFactoryMock).getPlayer("wizard");
+        game.addPlayer("johny", "wizard");
         assertTrue(players.containsKey("johny"));
     }
 
     @Test(expected = RuntimeException.class)
     public void Player_Cant_Join_Game_Twice() {
         game.addPlayer("johny", "wizard");
-        game.addPlayer("johny", "lizzard");
+        game.addPlayer("johny", "wizzard");
     }
 
     @Test
@@ -109,37 +98,76 @@ public class GameTest {
 
     @Test
     public void Game_Allows_Current_Player_To_Move_Right() {
-        
-        Player player = mock(Player.class); 
-        configureGameForMovement(player);      
+        Player player = mock(Player.class);
+        configureGameForMovement(player);
 
         game.movePlayerRight("first-player");
         verify(player, times(1)).moveRight(6);
     }
-    
+
     @Test
     public void Game_Allows_Current_Player_To_Move_Left() {
         Player player = mock(Player.class);
         configureGameForMovement(player);
-        
+
         game.movePlayerLeft("first-player");
         verify(player, times(1)).moveLeft(6);
     }
-    
+
+    @Test(expected = IllegalArgumentException.class)
+    public void Game_Trhows_Exception_When_Incorrect_Player_Moves_Left() {
+        configureGameForMovement(mock(Player.class));
+        game.movePlayerLeft("non-current-player");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void Game_Trhows_Exception_When_Incorrect_Player_Moves_Right() {
+        configureGameForMovement(mock(Player.class));
+        game.movePlayerRight("non-current-player");
+    }
+
     @Test
-    public void Game_Does_Not_Allow_Different_Player_To_Move_Left() { 
-        game.movePlayerRight("non-existing-player");
+    public void Game_Allows_Players_To_Attack_Each_Other() {
+        Player attacker = mock(Player.class);
+        Player attackee = configurePlayerFactoryForAttack(attacker);
+
+        addTwoUsersToGame();
+        System.out.println(players);
+
+        game.attack("first-player", "second-player");
+        verify(attacker, times(1)).attack(attackee);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void Game_Throws_Exception_On_Incorrect_User_Attack() {
+
+        addTwoUsersToGame();
+        game.attack("non-existing", "second-player");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void Game_Throws_Exception_On_Incorrect_User_Is_Attacked() {
+        addTwoUsersToGame();
+        game.attack("first-player", "non-existing");
+    }
+
+    private void addTwoUsersToGame() {
+        game.addPlayer("first-player", "a");
+        game.addPlayer("second-player", "b");
     }
 
     private void configureGameForMovement(Player player) {
         when(diceMock.roll()).thenReturn(6);
         when(playerFactoryMock.getPlayer(any(String.class)))
                 .thenReturn(player);
-        
-        game.addPlayer("first-player", "a");
-        game.addPlayer("second-player", "b");
-    }
-    
-    
 
+        addTwoUsersToGame();
+    }
+
+    private Player configurePlayerFactoryForAttack(Player attacker) {
+        Player attackee = mock(Player.class);
+        when(playerFactoryMock.getPlayer("a")).thenReturn(attacker);
+        when(playerFactoryMock.getPlayer("b")).thenReturn(attackee);
+        return attackee;
+    }
 }
