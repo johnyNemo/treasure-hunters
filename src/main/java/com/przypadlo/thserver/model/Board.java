@@ -13,9 +13,11 @@ public interface Board {
     
     public Integer calculatePosition(Player player, Directions direction, Integer fieldNumber);
     
-    public Integer getStartingCircle();
+    public Integer startingCircle();
     
-    public Integer getStartingField();
+    public Integer startingField();
     
-    public Integer getNumberOfCircles();
+    public Integer numberOfCircles();
+    
+    public Field fieldOfPosition(int circle, int field);
 }

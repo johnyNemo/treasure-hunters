@@ -1,8 +1,11 @@
 package com.mprzypadlo.tests.thserver.model;
 
+import com.przypadlo.thserver.model.Board;
 import com.przypadlo.thserver.model.Dice;
+import com.przypadlo.thserver.model.Field;
 import com.przypadlo.thserver.model.Game;
 import com.przypadlo.thserver.model.Game.Status;
+import com.przypadlo.thserver.model.Item;
 import com.przypadlo.thserver.model.Player;
 import com.przypadlo.thserver.model.PlayerFactoryInterface;
 import java.util.LinkedHashMap;
@@ -24,15 +27,16 @@ public class GameTest {
     private LinkedHashMap<String, Player> players;
 
     private final int minPlayers = 2;
+    
+    private Board boardMock;
 
     @Before
     public void setUp() {
-        System.out.println("Before each test?!");
         playerFactoryMock = mock(PlayerFactoryInterface.class);
         diceMock = mock(Dice.class);
         players = new LinkedHashMap();
-        System.out.println("Players size: " + players.size());
-        game = new Game(playerFactoryMock, players, minPlayers, diceMock);
+        boardMock = mock(Board.class);
+        game = new Game(boardMock,playerFactoryMock, players, minPlayers, diceMock);
     }
 
     @Test
@@ -44,7 +48,7 @@ public class GameTest {
     @Test(expected = RuntimeException.class)
     public void Player_Cant_Join_Game_Twice() {
         game.addPlayer("johny", "wizard");
-        game.addPlayer("johny", "wizzard");
+        game.addPlayer("johny", "wizard");
     }
 
     @Test
@@ -102,7 +106,7 @@ public class GameTest {
         configureGameForMovement(player);
 
         game.movePlayerRight("first-player");
-        verify(player, times(1)).moveRight(6);
+        verify(player, times(1)).moveRight(boardMock,6);
     }
 
     @Test
@@ -111,7 +115,7 @@ public class GameTest {
         configureGameForMovement(player);
 
         game.movePlayerLeft("first-player");
-        verify(player, times(1)).moveLeft(6);
+        verify(player, times(1)).moveLeft(boardMock,6);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -130,8 +134,7 @@ public class GameTest {
     public void Game_Allows_Players_To_Attack_Each_Other() {
         Player attacker = mock(Player.class);
         Player attackee = configurePlayerFactoryForAttack(attacker);
-
-        addTwoUsersToGame();
+        addTwoPlayers();
         System.out.println(players);
 
         game.attack("first-player", "second-player");
@@ -140,18 +143,66 @@ public class GameTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void Game_Throws_Exception_On_Incorrect_User_Attack() {
-
-        addTwoUsersToGame();
+        addTwoPlayers();
         game.attack("non-existing", "second-player");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void Game_Throws_Exception_On_Incorrect_User_Is_Attacked() {
-        addTwoUsersToGame();
+        addTwoPlayers();
         game.attack("first-player", "non-existing");
     }
+    
+    @Test
+    public void Game_Allows_Player_To_Pick_Item() {
+        Player player = mockBoardForGettingItems();
+        addTwoPlayers();
+        game.pickItem("first-player", "test-item-name");
+        verify(player, times(1)).pickItem(any(Item.class));
+    }
 
-    private void addTwoUsersToGame() {
+    private Player mockBoardForGettingItems() {
+        Player p = mock(Player.class);
+        when(p.circle()).thenReturn(0); 
+        when(p.field()).thenReturn(0);
+        Field fieldMock = mock(Field.class);
+        Item itemMock = mock(Item.class);
+        when(playerFactoryMock.getPlayer(any(String.class))).thenReturn(p);
+        when(boardMock.fieldOfPosition(0, 0)).thenReturn(fieldMock); 
+        when(fieldMock.getItem("test-item-name")).thenReturn(itemMock);
+        return p;
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void Game_Throws_Exception_On_Inccorect_User_Picks_Item() {
+        addTwoPlayers();
+        game.pickItem("non-existing-user", "item");
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void Game_Throws_Exception_On_Incorrect_Item_Name() { 
+       
+       mockBoardForGettingItems();
+       addTwoPlayers();
+       game.pickItem("first-player", "non-existing");
+    }
+    
+    @Test 
+    public void Game_Allows_Player_To_Use_Items() {
+        Player player = mock(Player.class);
+        when(playerFactoryMock.getPlayer(anyString())).thenReturn(player);
+        addTwoPlayers();
+        game.useItem("first-player", "some-item");
+        verify(player, times(1)).useItem("some-item");
+    }
+    
+    @Test(expected = IllegalArgumentException.class)
+    public void Game_Throws_Exception_When_Incorrect_Player_Uses_Item() { 
+        addTwoPlayers(); 
+        game.useItem("non-existing", "item");
+    }
+    
+    private void addTwoPlayers() {
         game.addPlayer("first-player", "a");
         game.addPlayer("second-player", "b");
     }
@@ -161,7 +212,7 @@ public class GameTest {
         when(playerFactoryMock.getPlayer(any(String.class)))
                 .thenReturn(player);
 
-        addTwoUsersToGame();
+        addTwoPlayers();
     }
 
     private Player configurePlayerFactoryForAttack(Player attacker) {

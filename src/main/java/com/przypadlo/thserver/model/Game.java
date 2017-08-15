@@ -31,7 +31,10 @@ public class Game {
 
     private int diceRoll;
 
+    private final Board board;
+
     public Game(
+            Board board,
             PlayerFactoryInterface playerFactory,
             LinkedHashMap<String, Player> players,
             int minPlayers,
@@ -41,11 +44,13 @@ public class Game {
         this.players = players;
         this.minPlayers = minPlayers;
         this.dice = dice;
+        this.board = board;
     }
 
     public void addPlayer(String name, String playerClass) {
         throwExceptionIfPlayerExists(name);
         Player p = playerFactory.getPlayer(playerClass);
+        System.out.println(p);
         players.put(name, p);
 
         if (players.size() == minPlayers) {
@@ -90,14 +95,14 @@ public class Game {
     public void movePlayerRight(String playerName) {
         throwExceptionWhenIncorrectPlayer(playerName);
         Player p = players.get(playerName);
-        p.moveRight(diceRoll);
+        p.moveRight(board, diceRoll);
 
     }
 
     public void movePlayerLeft(String playerName) {
         throwExceptionWhenIncorrectPlayer(playerName);
         Player p = players.get(playerName);
-        p.moveLeft(diceRoll);
+        p.moveLeft(board, diceRoll);
     }
 
     public void attack(String attackerName, String attackeeName) {
@@ -107,6 +112,27 @@ public class Game {
         Player attackee = players.get(attackeeName);
 
         attacker.attack(attackee);
+    }
+    
+    public void pickItem(String playerName, String itemName) {
+        throwExceptionWhenIncorrectPlayer(playerName);
+        Player player = players.get(playerName);
+        Item itemToPick = board.fieldOfPosition(
+                player.circle(), 
+                player.field()
+        ).getItem(itemName);
+        
+        if (itemToPick == null) { 
+            throw new IllegalArgumentException("Item " + itemName + "does not exists");
+        }
+        
+        player.pickItem(itemToPick);
+    }
+    
+    public void useItem(String playerName, String itemName) {
+        throwExceptionWhenIncorrectPlayer(playerName);
+        Player player = players.get(playerName);
+        player.useItem(itemName);
     }
 
     private void throwExceptionIfPlayerDoesNotExists(String playerName) {
