@@ -48,17 +48,24 @@ public class Game {
     }
 
     public void addPlayer(String name, String playerClass) {
-        throwExceptionIfPlayerExists(name);
-        Player p = playerFactory.getPlayer(playerClass);
-        System.out.println(p);
+        Player p = createPlayer(name, playerClass);
         players.put(name, p);
 
         if (players.size() == minPlayers) {
             status = Status.CURRENT_PLAYER_MOVE;
             playerIterator = players.keySet().iterator();
-            currentPlayer = playerIterator.next();
-            diceRoll = dice.roll();
+            updateCurrentPlayer();
         }
+    }
+
+    private Player createPlayer(String name, String playerClass) {
+        throwExceptionIfPlayerExists(name);
+        return playerFactory.getPlayer(playerClass);
+    }
+
+    private void updateCurrentPlayer() {
+        currentPlayer = playerIterator.next();
+        diceRoll = dice.roll();
     }
 
     private void throwExceptionIfPlayerExists(String name) {
@@ -68,15 +75,16 @@ public class Game {
     }
 
     public void removePlayer(String playerName) {
-
-        if (!players.containsKey(playerName)) {
-            throw new RuntimeException("non-existing-user");
-        }
-
+        throwExceptionWhenPlayerAlreadyExists(playerName);
         players.remove(playerName);
-
         if (players.size() < minPlayers) {
             status = Status.WAITING_FOR_USERS;
+        }
+    }
+
+    private void throwExceptionWhenPlayerAlreadyExists(String playerName) {
+        if (!players.containsKey(playerName)) {
+            throw new RuntimeException("Non existing user");
         }
     }
 
@@ -113,26 +121,33 @@ public class Game {
 
         attacker.attack(attackee);
     }
-    
+
     public void pickItem(String playerName, String itemName) {
         throwExceptionWhenIncorrectPlayer(playerName);
         Player player = players.get(playerName);
-        Item itemToPick = board.fieldOfPosition(
-                player.circle(), 
-                player.field()
-        ).getItem(itemName);
-        
-        if (itemToPick == null) { 
-            throw new IllegalArgumentException("Item " + itemName + "does not exists");
-        }
-        
+        Item itemToPick = getItem(player, itemName);
         player.pickItem(itemToPick);
     }
-    
+
+    private Item getItem(Player player, String itemName) {
+        return board.fieldOfPosition(
+                player.circle(),
+                player.field()
+        ).getItem(itemName);
+    }
+
     public void useItem(String playerName, String itemName) {
         throwExceptionWhenIncorrectPlayer(playerName);
         Player player = players.get(playerName);
         player.useItem(itemName);
+    }
+
+    public void action(String playerName, String actionName) {
+        throwExceptionWhenIncorrectPlayer(playerName);
+        Player player = players.get(playerName);
+        board.fieldOfPosition(player.circle(), player.field()).
+                applyAction(player);
+        updateCurrentPlayer();
     }
 
     private void throwExceptionIfPlayerDoesNotExists(String playerName) {

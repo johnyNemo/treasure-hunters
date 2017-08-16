@@ -27,7 +27,7 @@ public class GameTest {
     private LinkedHashMap<String, Player> players;
 
     private final int minPlayers = 2;
-    
+
     private Board boardMock;
 
     @Before
@@ -36,7 +36,7 @@ public class GameTest {
         diceMock = mock(Dice.class);
         players = new LinkedHashMap();
         boardMock = mock(Board.class);
-        game = new Game(boardMock,playerFactoryMock, players, minPlayers, diceMock);
+        game = new Game(boardMock, playerFactoryMock, players, minPlayers, diceMock);
     }
 
     @Test
@@ -65,8 +65,7 @@ public class GameTest {
 
     @Test
     public void Game_Changes_Status_When_Min_Users_Joined() {
-        game.addPlayer("a", "a1");
-        game.addPlayer("b", "b1");
+        startGame();
         assertEquals(Status.CURRENT_PLAYER_MOVE, game.status());
     }
 
@@ -93,132 +92,145 @@ public class GameTest {
     @Test
     public void Game_Rolls_Dice_On_Status_Change() {
         when(diceMock.roll()).thenReturn(6);
-
-        game.addPlayer("first-player", "wizzard");
-        game.addPlayer("second-player", "wizzard");
-
-        assertEquals(6, game.lastDiceRoll());
+        startGame();
+        verify(diceMock, times(1)).roll();
     }
 
     @Test
     public void Game_Allows_Current_Player_To_Move_Right() {
-        Player player = mock(Player.class);
-        configureGameForMovement(player);
-
+        Player player = configureGameForMovement();
         game.movePlayerRight("first-player");
-        verify(player, times(1)).moveRight(boardMock,6);
+        verify(player, times(1)).moveRight(boardMock, 6);
     }
 
     @Test
     public void Game_Allows_Current_Player_To_Move_Left() {
-        Player player = mock(Player.class);
-        configureGameForMovement(player);
-
+        Player player = configureGameForMovement();
         game.movePlayerLeft("first-player");
-        verify(player, times(1)).moveLeft(boardMock,6);
+        verify(player, times(1)).moveLeft(boardMock, 6);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void Game_Trhows_Exception_When_Incorrect_Player_Moves_Left() {
-        configureGameForMovement(mock(Player.class));
         game.movePlayerLeft("non-current-player");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void Game_Trhows_Exception_When_Incorrect_Player_Moves_Right() {
-        configureGameForMovement(mock(Player.class));
         game.movePlayerRight("non-current-player");
     }
 
     @Test
     public void Game_Allows_Players_To_Attack_Each_Other() {
         Player attacker = mock(Player.class);
-        Player attackee = configurePlayerFactoryForAttack(attacker);
-        addTwoPlayers();
-        System.out.println(players);
+        Player attacked = mock(Player.class);
 
+        startGame(attacker, attacked);
         game.attack("first-player", "second-player");
-        verify(attacker, times(1)).attack(attackee);
+        verify(attacker, times(1)).attack(attacked);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void Game_Throws_Exception_On_Incorrect_User_Attack() {
-        addTwoPlayers();
         game.attack("non-existing", "second-player");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void Game_Throws_Exception_On_Incorrect_User_Is_Attacked() {
-        addTwoPlayers();
         game.attack("first-player", "non-existing");
     }
-    
+
     @Test
     public void Game_Allows_Player_To_Pick_Item() {
-        Player player = mockBoardForGettingItems();
-        addTwoPlayers();
+        Player player = startGame();
+        mockBoardForGettingItems(player);
         game.pickItem("first-player", "test-item-name");
         verify(player, times(1)).pickItem(any(Item.class));
     }
 
-    private Player mockBoardForGettingItems() {
-        Player p = mock(Player.class);
-        when(p.circle()).thenReturn(0); 
-        when(p.field()).thenReturn(0);
-        Field fieldMock = mock(Field.class);
-        Item itemMock = mock(Item.class);
-        when(playerFactoryMock.getPlayer(any(String.class))).thenReturn(p);
-        when(boardMock.fieldOfPosition(0, 0)).thenReturn(fieldMock); 
-        when(fieldMock.getItem("test-item-name")).thenReturn(itemMock);
-        return p;
-    }
-    
     @Test(expected = IllegalArgumentException.class)
     public void Game_Throws_Exception_On_Inccorect_User_Picks_Item() {
-        addTwoPlayers();
+        startGame();
         game.pickItem("non-existing-user", "item");
     }
-    
-    @Test(expected = IllegalArgumentException.class)
-    public void Game_Throws_Exception_On_Incorrect_Item_Name() { 
-       
-       mockBoardForGettingItems();
-       addTwoPlayers();
-       game.pickItem("first-player", "non-existing");
-    }
-    
-    @Test 
+
+    @Test
     public void Game_Allows_Player_To_Use_Items() {
-        Player player = mock(Player.class);
-        when(playerFactoryMock.getPlayer(anyString())).thenReturn(player);
-        addTwoPlayers();
+        Player player = startGame();
         game.useItem("first-player", "some-item");
         verify(player, times(1)).useItem("some-item");
     }
-    
+
     @Test(expected = IllegalArgumentException.class)
-    public void Game_Throws_Exception_When_Incorrect_Player_Uses_Item() { 
-        addTwoPlayers(); 
+    public void Game_Throws_Exception_When_Incorrect_Player_Uses_Item() {
+        startGame();
         game.useItem("non-existing", "item");
     }
-    
-    private void addTwoPlayers() {
+
+    @Test
+    public void Game_Allows_Players_To_Execute_Actions() {
+        Player playerMock = startGame();
+        Field fieldMock = createFieldMock();
+        game.action("first-player", "test-action");
+        verify(fieldMock, times(1)).applyAction(playerMock);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void Game_Throws_Exception_When_Incorrect_Player_Executes_Action() {
+        startGame();
+        game.action("non-existing-player", "test-action");
+    }
+
+    @Test
+    public void Game_Updates_Current_Player_After_Action() {
+        Player playerMock = startGame();
+        createFieldMock(); 
+        game.action("first-player", "test-action");
+        assertEquals("second-player", game.currentPlayer());
+    }
+
+    private Field createFieldMock() {
+        Field fieldMock = mock(Field.class);
+        when(boardMock.fieldOfPosition(0, 0)).thenReturn(fieldMock);
+        return fieldMock;
+    }
+
+    private Player startGame() {
+        Player player = configurePlayerFactory();
+        game.addPlayer("first-player", "a");
+        game.addPlayer("second-player", "b");
+        return player;
+    }
+
+    private Player configurePlayerFactory() {
+        Player player = mock(Player.class);
+        when(playerFactoryMock.getPlayer(any(String.class)))
+                .thenReturn(player);
+        return player;
+    }
+
+    private void startGame(Player playerOne, Player playerTwo) {
+        when(playerFactoryMock.getPlayer("a")).thenReturn(playerOne);
+        when(playerFactoryMock.getPlayer("b")).thenReturn(playerTwo);
         game.addPlayer("first-player", "a");
         game.addPlayer("second-player", "b");
     }
 
-    private void configureGameForMovement(Player player) {
-        when(diceMock.roll()).thenReturn(6);
-        when(playerFactoryMock.getPlayer(any(String.class)))
-                .thenReturn(player);
-
-        addTwoPlayers();
+    private void mockBoardForGettingItems(Player player) {
+        when(player.circle()).thenReturn(0);
+        when(player.field()).thenReturn(0);
+        configureFieldReturning();
     }
 
-    private Player configurePlayerFactoryForAttack(Player attacker) {
-        Player attackee = mock(Player.class);
-        when(playerFactoryMock.getPlayer("a")).thenReturn(attacker);
-        when(playerFactoryMock.getPlayer("b")).thenReturn(attackee);
-        return attackee;
+    private void configureFieldReturning() {
+        Field fieldMock = mock(Field.class);
+        Item itemMock = mock(Item.class);
+        when(boardMock.fieldOfPosition(0, 0)).thenReturn(fieldMock);
+        when(fieldMock.getItem("test-item-name")).thenReturn(itemMock);
+    }
+
+    private Player configureGameForMovement() {
+        when(diceMock.roll()).thenReturn(6);
+        return startGame();
     }
 }
