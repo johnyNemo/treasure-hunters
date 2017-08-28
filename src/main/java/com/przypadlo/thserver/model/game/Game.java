@@ -1,5 +1,10 @@
-package com.przypadlo.thserver.model;
+package com.przypadlo.thserver.model.game;
 
+import com.przypadlo.thserver.domain.Board;
+import com.przypadlo.thserver.domain.Dice;
+import com.przypadlo.thserver.domain.Item;
+import com.przypadlo.thserver.domain.Player;
+import com.przypadlo.thserver.domain.PlayerFactoryInterface;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -47,6 +52,7 @@ public class Game {
         this.board = board;
     }
 
+
     public void addPlayer(String name, String playerClass) {
         Player p = createPlayer(name, playerClass);
         players.put(name, p);
@@ -92,6 +98,7 @@ public class Game {
         return status;
     }
 
+    
     public String currentPlayer() {
         return currentPlayer;
     }

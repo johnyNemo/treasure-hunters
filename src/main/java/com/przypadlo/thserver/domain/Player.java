@@ -1,6 +1,6 @@
-package com.przypadlo.thserver.model;
+package com.przypadlo.thserver.domain;
 
-import com.przypadlo.thserver.model.Board.Directions;
+import com.przypadlo.thserver.domain.Board.Directions;
 import com.przypadlo.thserver.model.exception.CannotAttackException;
 import com.przypadlo.thserver.model.exception.IncorrectCircleException;
 import java.util.HashMap;

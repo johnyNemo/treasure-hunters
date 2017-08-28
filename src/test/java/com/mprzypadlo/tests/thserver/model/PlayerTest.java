@@ -1,11 +1,11 @@
 package com.mprzypadlo.tests.thserver.model;
 
-import com.przypadlo.thserver.model.Attack;
-import com.przypadlo.thserver.model.Board;
-import com.przypadlo.thserver.model.Board.Directions;
-import com.przypadlo.thserver.model.Item;
-import com.przypadlo.thserver.model.Player;
-import com.przypadlo.thserver.model.Weapon;
+import com.przypadlo.thserver.domain.Attack;
+import com.przypadlo.thserver.domain.Board;
+import com.przypadlo.thserver.domain.Board.Directions;
+import com.przypadlo.thserver.domain.Item;
+import com.przypadlo.thserver.domain.Player;
+import com.przypadlo.thserver.domain.Weapon;
 import com.przypadlo.thserver.model.exception.CannotAttackException;
 import com.przypadlo.thserver.model.exception.IncorrectCircleException;
 import org.junit.Before;

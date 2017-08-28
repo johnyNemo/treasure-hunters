@@ -1,13 +1,13 @@
 package com.mprzypadlo.tests.thserver.model;
 
-import com.przypadlo.thserver.model.Board;
-import com.przypadlo.thserver.model.Dice;
-import com.przypadlo.thserver.model.Field;
-import com.przypadlo.thserver.model.Game;
-import com.przypadlo.thserver.model.Game.Status;
-import com.przypadlo.thserver.model.Item;
-import com.przypadlo.thserver.model.Player;
-import com.przypadlo.thserver.model.PlayerFactoryInterface;
+import com.przypadlo.thserver.domain.Board;
+import com.przypadlo.thserver.domain.Dice;
+import com.przypadlo.thserver.domain.Field;
+import com.przypadlo.thserver.model.game.Game;
+import com.przypadlo.thserver.model.game.Game.Status;
+import com.przypadlo.thserver.domain.Item;
+import com.przypadlo.thserver.domain.Player;
+import com.przypadlo.thserver.domain.PlayerFactoryInterface;
 import java.util.LinkedHashMap;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -88,12 +88,12 @@ public class GameTest {
         game.addPlayer("b", "b1");
         assertEquals("a", game.currentPlayer());
     }
-
+    
     @Test
-    public void Game_Rolls_Dice_On_Status_Change() {
-        when(diceMock.roll()).thenReturn(6);
+    public void Game_Allows_Player_To_Roll_A_Dice() {
         startGame();
-        verify(diceMock, times(1)).roll();
+        
+        
     }
 
     @Test

@@ -1,4 +1,4 @@
-package com.przypadlo.thserver.model;
+package com.przypadlo.thserver.domain;
 
 public interface Field {
     

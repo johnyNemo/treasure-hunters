@@ -9,6 +9,9 @@ public abstract class CreatePlayer implements Command {
         return "asdf";
     }
     
+    @Override
+    public abstract int sourceId();
+    
     public abstract String playerName(); 
 
     public abstract String playerClass();

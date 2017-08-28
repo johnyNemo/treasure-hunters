@@ -3,12 +3,12 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.mprzypadlo.thserver.application.command.handlers;
+package com.przypadlo.thserver.domain;
 
 /**
  *
- * @author mprzypadlo
+ * @author marek
  */
-public interface EventDispatcher {
-    public void dispatchEvent(Event evt);
+public interface Dice {
+    public int roll();
 }
